@@ -7,6 +7,7 @@
     <h1 class="h2"><i class="bi bi-speedometer2 me-2"></i>Patient Dashboard</h1>
 </div>
 
+<div id="dashboard-content" hx-get="{% url 'patients:dashboard' %}" hx-trigger="every 5s" hx-select="#dashboard-content" hx-swap="outerHTML">
 {% if patient %}
     <div class="row mb-4">
         <div class="col-md-4 mb-3">
@@ -200,58 +201,8 @@
         </div>
     </div>
 {% endif %}
+</div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const ws = new WebSocket(`${wsScheme}://${window.location.host}/ws/notifications/`);
-
-    ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        if (data.type === 'queue_update') {
-            location.reload();
-        }
-    };
-
-    (function() {
-        const queueStatusUrl = "{% url 'patients:queue_status' %}";
-
-        function updateDoctorStatus(slot) {
-            const card = document.querySelector(`[data-queue-slot-id="${slot.id}"]`);
-            if (!card) {
-                return;
-            }
-
-            const badge = card.querySelector('.doctor-status-badge');
-            const detail = card.querySelector('.doctor-status-detail');
-
-            if (badge) {
-                badge.classList.toggle('status-ready', slot.doctor_is_online);
-                badge.classList.toggle('status-pending', !slot.doctor_is_online);
-                badge.textContent = `Doctor ${slot.doctor_status_display}`;
-            }
-
-            if (detail) {
-                detail.textContent = slot.doctor_status_detail;
-            }
-        }
-
-        function refreshDoctorStatuses() {
-            fetch(queueStatusUrl, { headers: { 'Accept': 'application/json' } })
-                .then(response => response.ok ? response.json() : null)
-                .then(data => {
-                    if (!data || !Array.isArray(data.queue_slots)) {
-                        return;
-                    }
-                    data.queue_slots.forEach(updateDoctorStatus);
-                })
-                .catch(() => {});
-        }
-
-        if (document.querySelector('[data-queue-slot-id]')) {
-            setInterval(refreshDoctorStatuses, 5000);
-        }
-    })();
-</script>
 {% endblock %}
