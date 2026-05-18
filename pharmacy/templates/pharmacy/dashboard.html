@@ -11,6 +11,7 @@
     <a href="{% url 'pharmacy:prescription_list' %}" class="btn btn-outline-primary"><i class="bi bi-list me-2"></i>All Prescriptions</a>
 </div>
 
+<div id="dashboard-content" hx-get="{% url 'pharmacy:dashboard' %}" hx-trigger="every 5s" hx-select="#dashboard-content" hx-swap="outerHTML">
 <div class="row mb-4">
     <div class="col-md-4">
         <div class="card stat-card warning">
@@ -171,18 +172,8 @@
     </div>
 </div>
 {% endif %}
+</div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const ws = new WebSocket(`${wsScheme}://${window.location.host}/ws/pharmacy/`);
-
-    ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        if (data.event === 'pharmacy_update') {
-            location.reload();
-        }
-    };
-</script>
 {% endblock %}

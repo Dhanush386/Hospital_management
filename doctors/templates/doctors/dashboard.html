@@ -17,6 +17,7 @@
     </form>
 </div>
 
+<div id="dashboard-content" hx-get="{% url 'doctors:dashboard' %}" hx-trigger="every 5s" hx-select="#dashboard-content" hx-swap="outerHTML">
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card stat-card success">
@@ -142,36 +143,8 @@
         </div>
     </div>
 </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    (function() {
-        const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-
-        function connectQueueSocket() {
-            const ws = new WebSocket(`${wsScheme}://${window.location.host}/ws/queue/`);
-
-            ws.onmessage = function(event) {
-                let data;
-
-                try {
-                    data = JSON.parse(event.data);
-                } catch (error) {
-                    return;
-                }
-
-                if (data.event === 'queue_update') {
-                    window.location.reload();
-                }
-            };
-
-            ws.onclose = function() {
-                window.setTimeout(connectQueueSocket, 1500);
-            };
-        }
-
-        connectQueueSocket();
-    })();
-</script>
 {% endblock %}
