@@ -41,10 +41,18 @@ class UserRegistrationForm(UserCreationForm):
         required=True,
         widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Full Address', 'rows': 3})
     )
+    age = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Age (Auto-detected)', 'readonly': 'readonly'})
+    )
+    weight = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Weight (kg)'})
+    )
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'username', 'email', 'phone_number', 'date_of_birth', 'blood_group', 'address', 'password1', 'password2']
+        fields = ['first_name', 'last_name', 'username', 'email', 'phone_number', 'date_of_birth', 'age', 'blood_group', 'weight', 'address', 'password1', 'password2']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -70,6 +78,8 @@ class UserRegistrationForm(UserCreationForm):
                 defaults={
                     'name': user.get_full_name() or user.username,
                     'date_of_birth': self.cleaned_data.get('date_of_birth'),
+                    'age': self.cleaned_data.get('age'),
+                    'weight': self.cleaned_data.get('weight'),
                     'blood_group': self.cleaned_data.get('blood_group'),
                     'address': self.cleaned_data.get('address'),
                     'phone': self.cleaned_data.get('phone_number'),

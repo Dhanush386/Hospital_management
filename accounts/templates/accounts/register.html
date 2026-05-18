@@ -67,10 +67,27 @@
                                 {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
+                                <label for="id_age" class="form-label">Age (Auto-detected)</label>
+                                {{ form.age }}
+                                {% if form.age.errors %}
+                                    <div class="text-danger small">{{ form.age.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label for="id_blood_group" class="form-label">Blood Group *</label>
                                 {{ form.blood_group }}
                                 {% if form.blood_group.errors %}
                                     <div class="text-danger small">{{ form.blood_group.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_weight" class="form-label">Weight (kg)</label>
+                                {{ form.weight }}
+                                {% if form.weight.errors %}
+                                    <div class="text-danger small">{{ form.weight.errors.0 }}</div>
                                 {% endif %}
                             </div>
                         </div>
@@ -117,4 +134,36 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dobInput = document.getElementById('id_date_of_birth');
+        const ageInput = document.getElementById('id_age');
+        
+        if (dobInput && ageInput) {
+            function calculateAge() {
+                const dobVal = dobInput.value;
+                if (!dobVal) {
+                    ageInput.value = '';
+                    return;
+                }
+                const dob = new Date(dobVal);
+                const today = new Date();
+                let age = today.getFullYear() - dob.getFullYear();
+                const monthDiff = today.getMonth() - dob.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                    age--;
+                }
+                ageInput.value = age >= 0 ? age : 0;
+            }
+            
+            dobInput.addEventListener('change', calculateAge);
+            if (dobInput.value) {
+                calculateAge();
+            }
+        }
+    });
+</script>
 {% endblock %}

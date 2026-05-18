@@ -26,6 +26,7 @@ class Patient(models.Model):
     name = models.CharField(max_length=100)
     date_of_birth = models.DateField(null=True, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
+    weight = models.PositiveIntegerField(null=True, blank=True)
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES, blank=True)
     phone = models.CharField(max_length=15, blank=True)
     visit_date = models.DateTimeField(auto_now_add=True)

@@ -291,7 +291,7 @@
                                                     <span class="info-label">Age:</span>
                                                     <span class="info-value" style="flex-grow: 0; width: 60px; margin-right: 1.5rem;">{{ prescription.patient.age|default:"--" }}</span>
                                                     <span class="info-label">Weight:</span>
-                                                    <span class="info-value">-- kg</span>
+                                                    <span class="info-value">{% if prescription.patient.weight %}{{ prescription.patient.weight }} kg{% else %}-- kg{% endif %}</span>
                                                 </div>
                                                 <div class="info-line">
                                                     <span class="info-label">Address:</span>
