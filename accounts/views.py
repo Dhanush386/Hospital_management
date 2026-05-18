@@ -7,7 +7,7 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
-from .forms import UserRegistrationForm, UserLoginForm
+from .forms import UserRegistrationForm, UserLoginForm, PatientProfileForm
 from .models import User
 from queues.realtime import broadcast_queue_refresh
 
@@ -91,4 +91,25 @@ class ProfileView(LoginRequiredMixin, View):
     template_name = 'accounts/profile.html'
 
     def get(self, request):
-        return render(request, self.template_name, {'user': request.user})
+        form = None
+        if request.user.role == 'PATIENT':
+            form = PatientProfileForm(user=request.user)
+        return render(request, self.template_name, {
+            'user': request.user,
+            'form': form
+        })
+
+    def post(self, request):
+        if request.user.role == 'PATIENT':
+            form = PatientProfileForm(user=request.user, data=request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Your profile has been updated successfully!")
+                return redirect('accounts:profile')
+            
+            return render(request, self.template_name, {
+                'user': request.user,
+                'form': form
+            })
+        
+        return redirect('accounts:profile')

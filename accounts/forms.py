@@ -95,3 +95,64 @@ class UserLoginForm(AuthenticationForm):
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'})
     )
+
+
+class PatientProfileForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}))
+    last_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}))
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}))
+    phone_number = forms.CharField(max_length=15, required=True, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'}))
+    date_of_birth = forms.DateField(required=False, widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+    age = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Age', 'readonly': 'readonly'}))
+    weight = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Weight (kg)'}))
+    blood_group = forms.ChoiceField(
+        choices=[('', 'Select Blood Group')] + [
+            ('A+', 'A+'), ('A-', 'A-'), ('B+', 'B+'), ('B-', 'B-'),
+            ('AB+', 'AB+'), ('AB-', 'AB-'), ('O+', 'O+'), ('O-', 'O-')
+        ],
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    address = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Address', 'rows': 2}))
+
+    class Meta:
+        model = Patient
+        fields = ['date_of_birth', 'age', 'weight', 'blood_group', 'address']
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        patient = getattr(user, 'patient_profile', None)
+        
+        if patient:
+            kwargs['instance'] = patient
+            initial = kwargs.get('initial', {})
+            initial.update({
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'phone_number': user.phone_number or '',
+            })
+            kwargs['initial'] = initial
+            
+        super().__init__(*args, **kwargs)
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exclude(pk=self.user.pk).exists():
+            raise ValidationError("Email already registered.")
+        return email
+
+    def save(self, commit=True):
+        patient = super().save(commit=False)
+        
+        self.user.first_name = self.cleaned_data['first_name']
+        self.user.last_name = self.cleaned_data['last_name']
+        self.user.email = self.cleaned_data['email']
+        self.user.phone_number = self.cleaned_data['phone_number']
+        self.user.save()
+        
+        patient.name = f"{self.user.first_name} {self.user.last_name}"
+        patient.phone = self.user.phone_number
+        if commit:
+            patient.save()
+        return patient
