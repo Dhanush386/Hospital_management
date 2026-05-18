@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Analytics - Smart Hospital{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2"><i class="bi bi-graph-up-arrow me-2"></i>Hospital Analytics Dashboard</h1>
+    <div>
+        <span class="badge bg-primary fs-6"><i class="bi bi-robot me-1"></i>ML Model RMSE: {{ rmse }} mins</span>
+        <span class="badge bg-info fs-6 text-dark ms-2"><i class="bi bi-clock me-1"></i>Expected Peak: {{ peak_hour }}</span>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Department Footfall -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm border-0" style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);">
+            <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                <h5 class="card-title text-info"><i class="bi bi-people me-2"></i>Department Footfall</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="footfallChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ML Feature Importance -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm border-0" style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);">
+            <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                <h5 class="card-title text-warning"><i class="bi bi-lightning-charge me-2"></i>Wait Time Model - Feature Importance</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="featureChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Peak Hour Analysis -->
+    <div class="col-md-12 mb-4">
+        <div class="card shadow-sm border-0" style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);">
+            <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                <h5 class="card-title text-success"><i class="bi bi-clock-history me-2"></i>Peak Hour Analysis (Patient Load)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="peakHourChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Doctor Efficiency -->
+    <div class="col-md-12 mb-4">
+        <div class="card shadow-sm border-0" style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);">
+            <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                <h5 class="card-title text-primary"><i class="bi bi-person-check me-2"></i>Doctor Efficiency (Patients / Avg Mins)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="efficiencyChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Data passed from Django view
+    const deptLabels = JSON.parse('{{ dept_labels|safe }}');
+    const deptData = JSON.parse('{{ dept_data|safe }}');
+    
+    const docLabels = JSON.parse('{{ doc_labels|safe }}');
+    const docAvgTimes = JSON.parse('{{ doc_avg_times|safe }}');
+    const docEfficiency = JSON.parse('{{ doc_efficiency|safe }}');
+    
+    const hourLabels = JSON.parse('{{ hour_labels|safe }}');
+    const hourData = JSON.parse('{{ hour_data|safe }}');
+
+    const featureDict = JSON.parse('{{ feature_importances|safe }}');
+    const featureLabels = Object.keys(featureDict);
+    const featureData = Object.values(featureDict);
+
+    // Common styling
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+
+    // 1. Department Footfall (Pie/Doughnut)
+    new Chart(document.getElementById('footfallChart'), {
+        type: 'doughnut',
+        data: {
+            labels: deptLabels,
+            datasets: [{
+                data: deptData,
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' }
+            }
+        }
+    });
+
+    // 2. Feature Importance (Horizontal Bar)
+    new Chart(document.getElementById('featureChart'), {
+        type: 'bar',
+        data: {
+            labels: featureLabels.map(l => l.replace('_Encoded', '').replace('_', ' ')),
+            datasets: [{
+                label: 'Importance %',
+                data: featureData,
+                backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // 3. Peak Hour Analysis (Line)
+    new Chart(document.getElementById('peakHourChart'), {
+        type: 'line',
+        data: {
+            labels: hourLabels.map(h => h + ':00'),
+            datasets: [{
+                label: 'Total Patients Created',
+                data: hourData,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 4. Doctor Efficiency (Bar)
+    new Chart(document.getElementById('efficiencyChart'), {
+        type: 'bar',
+        data: {
+            labels: docLabels,
+            datasets: [{
+                label: 'Efficiency Score',
+                data: docEfficiency,
+                backgroundColor: '#3b82f6',
+                borderRadius: 5
+            }, {
+                label: 'Avg Consultation Time (mins)',
+                data: docAvgTimes,
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderRadius: 5,
+                type: 'line'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+</script>
+{% endblock %}

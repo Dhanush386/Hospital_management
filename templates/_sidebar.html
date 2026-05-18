@@ -1,0 +1,115 @@
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+    <div class="position-sticky pt-3">
+        {% if user.role == 'PATIENT' %}
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/patient/dashboard/' %}active{% endif %}" href="{% url 'patients:dashboard' %}">
+                        <i class="bi bi-speedometer2"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/patient/prescriptions/' in request.path %}active{% endif %}" href="{% url 'patients:prescriptions' %}">
+                        <i class="bi bi-capsule"></i>
+                        Prescriptions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/patient/lab-results/' in request.path %}active{% endif %}" href="{% url 'patients:lab_results' %}">
+                        <i class="bi bi-clipboard-data"></i>
+                        Lab Results
+                    </a>
+                </li>
+            </ul>
+
+        {% elif user.role == 'DOCTOR' %}
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/doctor/dashboard/' %}active{% endif %}" href="{% url 'doctors:dashboard' %}">
+                        <i class="bi bi-speedometer2"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/doctor/queue/' in request.path %}active{% endif %}" href="{% url 'doctors:queue' %}">
+                        <i class="bi bi-people"></i>
+                        Patient Queue
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/doctor/lab-results/' in request.path %}active{% endif %}" href="{% url 'doctors:lab_results' %}">
+                        <i class="bi bi-clipboard-data"></i>
+                        Lab Results
+                    </a>
+                </li>
+            </ul>
+
+        {% elif user.role == 'LAB' %}
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/lab/dashboard/' %}active{% endif %}" href="{% url 'lab:dashboard' %}">
+                        <i class="bi bi-speedometer2"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/lab/orders/' in request.path %}active{% endif %}" href="{% url 'lab:order_list' %}">
+                        <i class="bi bi-list-check"></i>
+                        All Orders
+                    </a>
+                </li>
+            </ul>
+
+        {% elif user.role == 'PHARMACY' %}
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/pharmacy/dashboard/' %}active{% endif %}" href="{% url 'pharmacy:dashboard' %}">
+                        <i class="bi bi-speedometer2"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/pharmacy/prescriptions/' in request.path %}active{% endif %}" href="{% url 'pharmacy:prescription_list' %}">
+                        <i class="bi bi-list-check"></i>
+                        All Prescriptions
+                    </a>
+                </li>
+            </ul>
+
+        {% elif user.role == 'ADMIN' %}
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/">
+                        <i class="bi bi-shield-gear"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/accounts/analytics/' in request.path %}active{% endif %}" href="{% url 'accounts:analytics' %}">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        Analytics Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/queue/display/">
+                        <i class="bi bi-display"></i>
+                        Queue Display
+                    </a>
+                </li>
+            </ul>
+        {% endif %}
+
+        <hr class="my-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <form action="{% url 'accounts:logout' %}" method="post" class="d-inline w-100">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-link text-danger border-0 bg-transparent w-100 text-start">
+                        <i class="bi bi-box-arrow-left"></i>
+                        Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</nav>

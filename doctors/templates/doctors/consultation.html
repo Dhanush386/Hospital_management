@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+
+{% block title %}Consultation - {{ patient.name }} - Smart Hospital{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+        <div class="token-display py-2 px-4 me-3">
+            <span class="h4 mb-0">{% if current_slot %}{{ current_slot.token_number }}{% else %}{{ patient.token_id }}{% endif %}</span>
+        </div>
+        <div>
+            <h1 class="h3 mb-0">{{ patient.name }}</h1>
+            <p class="text-muted mb-0">
+                {{ patient.age }} years old &bull; 
+                <span class="badge bg-danger ms-1">{{ patient.blood_group }}</span> &bull; 
+                {{ patient.phone }}
+            </p>
+            <small class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ patient.address }}</small>
+        </div>
+    </div>
+    <a href="{% url 'doctors:queue' %}" class="btn btn-outline-secondary">Back to Queue</a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="consultationTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#prescription"><i class="bi bi-capsule me-2"></i>Prescription</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#lab"><i class="bi bi-clipboard-data me-2"></i>Lab Order</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#notes"><i class="bi bi-file-text me-2"></i>Notes</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body tab-content">
+                <div class="tab-pane fade show active" id="prescription">
+                    <form method="post" action="{% url 'doctors:create_prescription' patient.id %}">
+                        {% csrf_token %}
+                        <div id="medicine-rows">
+                            <div class="row medicine-row mb-3">
+                                <div class="col-md-4">
+                                    <input type="text" name="medicine[]" class="form-control" placeholder="Medicine name" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" name="dosage[]" class="form-control" placeholder="Dosage (e.g., 1 tablet)" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" name="duration[]" class="form-control" placeholder="Duration (e.g., 7 days)" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-outline-danger btn-sm remove-row" style="display: none;">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-medicine">
+                                <i class="bi bi-plus me-1"></i>Add Medicine
+                            </button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Instructions</label>
+                            <textarea name="instructions[]" class="form-control" rows="2" placeholder="General instructions"></textarea>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-2"></i>Send to Pharmacy
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade" id="lab">
+                    <form method="post" action="{% url 'doctors:create_lab_order' patient.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Test Type</label>
+                            <select name="test_type" class="form-select" id="test-type-select" required>
+                                <option value="BLOOD">Blood Test</option>
+                                <option value="URINE">Urine Test</option>
+                                <option value="XRAY">X-Ray</option>
+                                <option value="CT">CT Scan</option>
+                                <option value="MRI">MRI</option>
+                                <option value="ECG">ECG</option>
+                                <option value="USG">Ultrasound</option>
+                                <option value="OTHER">Other (Specify below)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Send To Lab Technician</label>
+                            <select name="assigned_lab" class="form-select">
+                                <option value="">Test Type Lab Queue</option>
+                                {% for lab in lab_technicians %}
+                                    <option value="{{ lab.id }}">
+                                        {{ lab.get_full_name|default:lab.username }}{% if lab.lab_profile.department %} - {{ lab.lab_profile.get_department_display }}{% else %} - Central Lab{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="custom-test-field" style="display: none;">
+                            <label class="form-label">Custom Test Name</label>
+                            <input type="text" name="custom_test" class="form-control" placeholder="Enter test name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-2"></i>Send to Lab
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade" id="notes">
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-robot me-2"></i><strong>AI Assistant:</strong> Speak or type the consultation details below, then click "Generate SOAP Note" to automatically structure the clinical documentation.
+                    </div>
+                    
+                    <form id="soap-generation-form" class="mb-4">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold"><i class="bi bi-mic-fill me-2 text-danger"></i>Consultation Transcript</label>
+                            <div class="position-relative">
+                                <textarea name="transcript" id="transcript-input" class="form-control" rows="4" placeholder="Type or click 'Start Voice Input' to speak..."></textarea>
+                                <div id="recording-status" class="position-absolute bottom-0 end-0 m-2 badge bg-danger" style="display: none; animation: pulse 1.5s infinite;">
+                                    <i class="bi bi-record-circle me-1"></i>Recording...
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" id="start-voice-btn" class="btn btn-danger btn-sm">
+                                <i class="bi bi-mic me-1"></i>Start Voice Input
+                            </button>
+                            <button type="button" id="simulate-voice" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-magic me-1"></i>Simulate Text
+                            </button>
+                            <button type="button" id="generate-soap-btn" class="btn btn-info btn-sm text-white">
+                                <i class="bi bi-cpu me-1"></i>AI Generate SOAP Note
+                            </button>
+                        </div>
+                        <div id="ai-loading" class="mt-2" style="display: none;">
+                            <div class="spinner-border spinner-border-sm text-info me-2" role="status"></div>
+                            <span class="small text-muted">AI is analyzing consultation data...</span>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <form method="post" action="{% url 'doctors:save_note' patient.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="transcript" id="final-transcript">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Subjective (S)</label>
+                            <textarea name="subjective" id="id_subjective" class="form-control" rows="2" placeholder="Patient symptoms and history"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Objective (O)</label>
+                            <textarea name="objective" id="id_objective" class="form-control" rows="2" placeholder="Vitals and clinical observations"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Assessment (A)</label>
+                            <textarea name="assessment" id="id_assessment" class="form-control" rows="2" placeholder="Diagnosis or clinical assessment"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Plan (P)</label>
+                            <textarea name="plan" id="id_plan" class="form-control" rows="3" placeholder="Treatment plan and follow-up"></textarea>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>Save Final Clinical Note
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Previous Prescriptions</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for prescription in prescriptions %}
+                    <div class="list-group-item">
+                        <small class="text-muted">{{ prescription.created_at|date:"M d, Y" }}</small>
+                        <p class="mb-0">
+                            {% for med in prescription.medicines_list %}
+                                {{ med.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-muted">No previous prescriptions</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Lab Results</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for order in lab_orders %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <span>{{ order.test_name }}</span>
+                            <span class="status-badge status-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+                        </div>
+                        {% if order.result_file %}
+                        <a href="{{ order.result_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                            View Result
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-muted">No lab orders</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('add-medicine').addEventListener('click', function() {
+        const container = document.getElementById('medicine-rows');
+        const newRow = container.querySelector('.medicine-row').cloneNode(true);
+        newRow.querySelectorAll('input').forEach(input => input.value = '');
+        newRow.querySelector('.remove-row').style.display = 'inline-block';
+        container.appendChild(newRow);
+
+        newRow.querySelector('.remove-row').addEventListener('click', function() {
+            newRow.remove();
+        });
+    });
+
+    document.querySelectorAll('.remove-row').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.medicine-row').remove();
+        });
+    });
+
+    document.getElementById('test-type-select').addEventListener('change', function() {
+        const customField = document.getElementById('custom-test-field');
+        if (this.value === 'OTHER') {
+            customField.style.display = 'block';
+        } else {
+            customField.style.display = 'none';
+        }
+    });
+
+    // AI SOAP Generation
+    const startVoiceBtn = document.getElementById('start-voice-btn');
+    const simulateBtn = document.getElementById('simulate-voice');
+    const generateBtn = document.getElementById('generate-soap-btn');
+    const transcriptInput = document.getElementById('transcript-input');
+    const loadingIndicator = document.getElementById('ai-loading');
+    const recordingStatus = document.getElementById('recording-status');
+
+    // Web Speech API Integration
+    let recognition;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event) => {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                }
+            }
+            if (finalTranscript) {
+                transcriptInput.value += (transcriptInput.value ? ' ' : '') + finalTranscript;
+            }
+        };
+
+        recognition.onstart = () => {
+            recordingStatus.style.display = 'block';
+            startVoiceBtn.innerHTML = '<i class="bi bi-stop-fill me-1"></i>Stop Voice Input';
+            startVoiceBtn.classList.replace('btn-danger', 'btn-dark');
+        };
+
+        recognition.onend = () => {
+            recordingStatus.style.display = 'none';
+            startVoiceBtn.innerHTML = '<i class="bi bi-mic me-1"></i>Start Voice Input';
+            startVoiceBtn.classList.replace('btn-dark', 'btn-danger');
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            recognition.stop();
+        };
+
+        let isRecording = false;
+        startVoiceBtn.addEventListener('click', function() {
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+            } else {
+                recognition.start();
+                isRecording = true;
+            }
+        });
+    } else {
+        startVoiceBtn.disabled = true;
+        startVoiceBtn.title = "Speech recognition is not supported in this browser.";
+    }
+
+    const sampleTranscripts = [
+        "Patient complains of sharp chest pain for 2 days. Blood pressure is 140/90. Heart rate is 88 bpm. Suspected stable angina. Plan: ECG immediately, prescribe Aspirin 75mg, and refer to cardiology.",
+        "6-year-old child with high fever 102F and persistent cough. Chest sounds clear on auscultation. Throat is red. Diagnosis: Viral pharyngitis. Plan: Paracetamol syrup 5ml thrice daily, lots of fluids, and rest for 3 days.",
+        "Middle-aged man with lower back pain radiating down the right leg. Positive straight leg raise test. Suspected lumbar disc prolapse. Plan: MRI Lumbar spine, physiotherapy twice a week, and Naproxen for pain."
+    ];
+
+    simulateBtn.addEventListener('click', function() {
+        const random = Math.floor(Math.random() * sampleTranscripts.length);
+        transcriptInput.value = sampleTranscripts[random];
+    });
+
+    generateBtn.addEventListener('click', function() {
+        const transcript = transcriptInput.value;
+        if (!transcript) {
+            alert('Please enter or simulate a transcript first.');
+            return;
+        }
+
+        loadingIndicator.style.display = 'block';
+        generateBtn.disabled = true;
+
+        fetch("{% url 'doctors:generate_soap' patient.id %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('#notes [name=csrfmiddlewaretoken]').value
+            },
+            body: `transcript=${encodeURIComponent(transcript)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('AI Error: ' + data.error);
+            } else {
+                document.getElementById('id_subjective').value = data.subjective || '';
+                document.getElementById('id_objective').value = data.objective || '';
+                document.getElementById('id_assessment').value = data.assessment || '';
+                document.getElementById('id_plan').value = data.plan || '';
+                document.getElementById('final-transcript').value = transcript;
+                
+                // Switch view to the form
+                document.getElementById('id_subjective').scrollIntoView({ behavior: 'smooth' });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Failed to connect to AI service.');
+        })
+        .finally(() => {
+            loadingIndicator.style.display = 'none';
+            generateBtn.disabled = false;
+        });
+    });
+</script>
+{% endblock %}

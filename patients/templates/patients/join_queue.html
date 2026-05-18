@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Join Queue - Smart Hospital{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2"><i class="bi bi-plus-circle me-2"></i>Join Queue</h1>
+        <p class="text-muted mb-0">Select the department you want to visit today.</p>
+    </div>
+    <a href="{% url 'patients:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+    </a>
+</div>
+
+{% if not patient %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-exclamation-circle display-4 text-muted mb-3"></i>
+            <h3 class="h4">No Patient Profile Found</h3>
+            <p class="text-muted mb-0">Your user account is not linked to a patient profile yet.</p>
+        </div>
+    </div>
+{% else %}
+    {% if active_slots %}
+    <div class="card border-primary">
+        <div class="card-body">
+            <h3 class="h4 mb-3">Current Active Queue Entries</h3>
+            <div class="row g-3">
+                {% for active_slot in active_slots %}
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted small">Department</div>
+                        <div class="fw-semibold">{{ active_slot.get_department_display }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted small">Status</div>
+                        <div class="fw-semibold">{{ active_slot.get_status_display }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted small">Token / Position</div>
+                        <div class="fw-semibold">{{ active_slot.token_number }} / {{ active_slot.position_in_queue|default:"In consultation" }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4"></div>
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <div class="text-muted small mb-1">Patient</div>
+                        <div class="fw-semibold">{{ patient.name }}</div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="department" class="form-label">Department</label>
+                            <select id="department" name="department" class="form-select" required>
+                                {% for value, label in department_choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <div id="doctor-availability" class="alert mt-3 mb-0 {% if default_availability.is_available %}alert-success{% elif default_availability.total_doctors %}alert-warning{% else %}alert-secondary{% endif %}">
+                                {% if default_availability.is_available %}
+                                    Doctor available: {{ default_availability.doctors|join:", " }}
+                                {% elif default_availability.total_doctors %}
+                                    No doctor is currently online for this department.
+                                {% else %}
+                                    No doctor has been assigned to this department yet.
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check2-circle me-2"></i>Join Queue
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        const departmentSelect = document.getElementById('department');
+        const availabilityBox = document.getElementById('doctor-availability');
+
+        if (!departmentSelect || !availabilityBox) {
+            return;
+        }
+
+        function renderAvailability(data) {
+            availabilityBox.classList.remove('alert-success', 'alert-warning', 'alert-secondary', 'alert-danger');
+
+            if (data.is_available) {
+                availabilityBox.classList.add('alert-success');
+                availabilityBox.textContent = `Doctor available: ${data.doctors.join(', ')}`;
+            } else if (data.total_doctors > 0) {
+                availabilityBox.classList.add('alert-warning');
+                availabilityBox.textContent = 'No doctor is currently online for this department.';
+            } else {
+                availabilityBox.classList.add('alert-secondary');
+                availabilityBox.textContent = 'No doctor has been assigned to this department yet.';
+            }
+        }
+
+        departmentSelect.addEventListener('change', function() {
+            const url = `{% url 'patients:department_availability' %}?department=${encodeURIComponent(departmentSelect.value)}`;
+
+            availabilityBox.classList.remove('alert-success', 'alert-warning', 'alert-secondary', 'alert-danger');
+            availabilityBox.classList.add('alert-secondary');
+            availabilityBox.textContent = 'Checking doctor availability...';
+
+            fetch(url)
+                .then(response => response.json())
+                .then(renderAvailability)
+                .catch(function() {
+                    availabilityBox.classList.remove('alert-success', 'alert-warning', 'alert-secondary');
+                    availabilityBox.classList.add('alert-danger');
+                    availabilityBox.textContent = 'Could not check doctor availability right now.';
+                });
+        });
+    })();
+</script>
+{% endblock %}

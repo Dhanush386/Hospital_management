@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Doctor Dashboard - Smart Hospital{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2"><i class="bi bi-speedometer2 me-2"></i>Doctor Dashboard</h1>
+        <p class="text-muted mb-0">Welcome back, Dr. {{ user.get_full_name|default:user.username }}</p>
+    </div>
+    <form method="post" action="{% url 'doctors:toggle_availability' %}" class="d-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-lg {% if availability.is_online %}btn-success{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-circle-fill me-2"></i>
+            {% if availability.is_online %}Online{% else %}Offline{% endif %}
+        </button>
+    </form>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-1">Patients Today</h6>
+                        <h3 class="mb-0">{{ availability.patients_seen_today }}</h3>
+                    </div>
+                    <div class="text-success">
+                        <i class="bi bi-people display-6"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-1">Waiting Patients</h6>
+                        <h3 class="mb-0">{{ waiting_patients|length }}</h3>
+                    </div>
+                    <div class="text-warning">
+                        <i class="bi bi-hourglass-split display-6"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card danger">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-1">Pending Lab Orders</h6>
+                        <h3 class="mb-0">{{ my_lab_orders|length }}</h3>
+                    </div>
+                    <div class="text-danger">
+                        <i class="bi bi-clipboard-data display-6"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-1">Total Prescriptions</h6>
+                        <h3 class="mb-0">{{ recent_prescriptions|length }}</h3>
+                    </div>
+                    <div class="text-primary">
+                        <i class="bi bi-capsule display-6"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-hourglass-split me-2"></i>Waiting Patients</h5>
+                <a href="{% url 'doctors:queue' %}" class="btn btn-sm btn-outline-primary">View Queue</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for slot in waiting_patients %}
+                    <a href="{% url 'doctors:queue' %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-0 fw-medium">{{ slot.patient.name }}</p>
+                                <small class="text-muted">{{ slot.get_department_display }} - Token: {{ slot.token_number }}</small>
+                            </div>
+                            <span class="text-muted small">{{ slot.waiting_time_display }}</span>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="empty-state">
+                        <i class="bi bi-check-circle"></i>
+                        <p>No patients waiting</p>
+                        <a href="{% url 'doctors:queue' %}" class="btn btn-primary">View Queue</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Pending Lab Orders</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for order in my_lab_orders %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-0 fw-medium">{{ order.patient.name }}</p>
+                                <small class="text-muted">{{ order.test_name }} - {{ order.created_at|date:"M d, H:i" }}</small>
+                            </div>
+                            <span class="status-badge status-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">
+                        <i class="bi bi-clipboard-check"></i>
+                        <p>No pending lab orders</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+        function connectQueueSocket() {
+            const ws = new WebSocket(`${wsScheme}://${window.location.host}/ws/queue/`);
+
+            ws.onmessage = function(event) {
+                let data;
+
+                try {
+                    data = JSON.parse(event.data);
+                } catch (error) {
+                    return;
+                }
+
+                if (data.event === 'queue_update') {
+                    window.location.reload();
+                }
+            };
+
+            ws.onclose = function() {
+                window.setTimeout(connectQueueSocket, 1500);
+            };
+        }
+
+        connectQueueSocket();
+    })();
+</script>
+{% endblock %}

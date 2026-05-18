@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Queue - Smart Hospital{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2"><i class="bi bi-people me-2"></i>Patient Queue</h1>
+    <a href="{% url 'doctors:dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-check me-2"></i>My Patient</h5>
+            </div>
+            <div class="card-body">
+                {% for slot in in_progress %}
+                <div class="text-center mb-3">
+                    <div class="token-display py-3">
+                        <p class="mb-1 opacity-75">Token</p>
+                        <h2 class="mb-0">{{ slot.token_number }}</h2>
+                    </div>
+                    <h4 class="mt-3">{{ slot.patient.name }}</h4>
+                    <p class="text-muted">{{ slot.get_department_display }}</p>
+
+                    <form method="post" class="mt-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="queue_slot_id" value="{{ slot.id }}">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'doctors:consultation' slot.patient.id %}" class="btn btn-primary">
+                                <i class="bi bi-chat-square-text me-2"></i>Open Consultation
+                            </a>
+                            <button type="submit" name="action" value="complete" class="btn btn-success">
+                                <i class="bi bi-check-circle me-2"></i>Complete
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <i class="bi bi-person"></i>
+                    <p>No patient assigned</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-hourglass-split me-2"></i>Waiting Patients</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Token</th>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Wait Time</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queue-table-body">
+                            {% for patient in waiting_patients %}
+                            <tr>
+                                <td><span class="fw-bold text-primary">{{ patient.token_number }}</span></td>
+                                <td>{{ patient.patient.name }}</td>
+                                <td>{{ patient.get_department_display }}</td>
+                                <td>{{ patient.waiting_time_display }}</td>
+                                <td>
+                                    {% if not in_progress %}
+                                    <form method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="queue_slot_id" value="{{ patient.id }}">
+                                        <button type="submit" name="action" value="accept" class="btn btn-sm btn-primary">
+                                            Accept
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-muted">Busy</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="empty-state py-5">
+                                    <i class="bi bi-check-circle text-success"></i>
+                                    <p>No patients waiting</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if my_history %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Today's Completed</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Token</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Completed At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for slot in my_history %}
+                    <tr>
+                        <td>{{ slot.token_number }}</td>
+                        <td>{{ slot.patient.name }}</td>
+                        <td>{{ slot.get_department_display }}</td>
+                        <td>{{ slot.completed_at|date:"H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+        function connectQueueSocket() {
+            const ws = new WebSocket(`${wsScheme}://${window.location.host}/ws/queue/`);
+
+            ws.onmessage = function(event) {
+                let data;
+
+                try {
+                    data = JSON.parse(event.data);
+                } catch (error) {
+                    return;
+                }
+
+                if (data.event === 'queue_update') {
+                    window.location.reload();
+                }
+            };
+
+            ws.onclose = function() {
+                window.setTimeout(connectQueueSocket, 1500);
+            };
+        }
+
+        connectQueueSocket();
+    })();
+</script>
+{% endblock %}

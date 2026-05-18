@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Smart Hospital{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2"><i class="bi bi-person-circle me-2"></i>My Profile</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <div class="d-inline-block rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; font-size: 2.5rem;">
+                        {{ user.first_name.0|default:user.username.0|upper }}{{ user.last_name.0|upper }}
+                    </div>
+                </div>
+                <h4 class="mb-1">{{ user.get_full_name|default:user.username }}</h4>
+                <p class="mb-2">
+                    <span class="role-badge role-{{ user.role|lower }}">{{ user.get_role_display }}</span>
+                </p>
+                <p class="text-muted"><i class="bi bi-envelope me-2"></i>{{ user.email }}</p>
+                <p class="text-muted"><i class="bi bi-telephone me-2"></i>{{ user.phone_number|default:"Not set" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Account Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-6 mb-3">
+                        <label class="text-muted small">Username</label>
+                        <p class="mb-0 fw-medium">{{ user.username }}</p>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <label class="text-muted small">Email</label>
+                        <p class="mb-0 fw-medium">{{ user.email }}</p>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <label class="text-muted small">Phone Number</label>
+                        <p class="mb-0 fw-medium">{{ user.phone_number|default:"Not set" }}</p>
+                    </div>
+
+                    <div class="col-sm-6 mb-3">
+                        <label class="text-muted small">Date Joined</label>
+                        <p class="mb-0 fw-medium">{{ user.date_joined|date:"F d, Y" }}</p>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <label class="text-muted small">Last Login</label>
+                        <p class="mb-0 fw-medium">{{ user.last_login|date:"F d, Y H:i"|default:"Never" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
