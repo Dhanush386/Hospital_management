@@ -1,6 +1,13 @@
 from django.db import models
 from patients.models import Patient
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+
+class VercelStorage(FileSystemStorage):
+    def url(self, name):
+        if name and (name.startswith('http://') or name.startswith('https://')):
+            return name
+        return super().url(name)
 
 
 class LabOrder(models.Model):
@@ -39,7 +46,7 @@ class LabOrder(models.Model):
     custom_test_name = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     notes = models.TextField(blank=True)
-    result_file = models.FileField(upload_to='lab_results/%Y/%m/%d/', blank=True, null=True)
+    result_file = models.FileField(upload_to='lab_results/%Y/%m/%d/', storage=VercelStorage(), blank=True, null=True)
     result_notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
