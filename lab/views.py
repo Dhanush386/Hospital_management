@@ -82,25 +82,54 @@ class LabOrderDetailView(LoginRequiredMixin, LabRequiredMixin, View):
 
             uploaded_file = request.FILES.get('result_file')
             if uploaded_file:
-                # Try to upload to cloud storage (Catbox) to support serverless environment
+                # Try to upload to cloud storage to support serverless environment
                 cloud_url = None
+
+                # Service 1: Tmpfiles.org (Highly reliable, CI/CD friendly)
                 try:
                     import requests
-                    url = "https://catbox.moe/user/api.php"
+                    # Disable urllib3 warnings for verify=False
+                    import urllib3
+                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                    
+                    url = "https://tmpfiles.org/api/v1/upload"
                     uploaded_file.seek(0)
                     files = {
-                        'fileToUpload': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)
+                        'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)
                     }
-                    data = {
-                        'reqtype': 'fileupload'
-                    }
-                    response = requests.post(url, data=data, files=files, timeout=15)
+                    response = requests.post(url, files=files, timeout=15, verify=False)
                     if response.status_code == 200:
-                        file_url = response.text.strip()
-                        if file_url.startswith("http"):
-                            cloud_url = file_url
+                        data = response.json()
+                        if data.get('status') == 'success':
+                            raw_url = data.get('data', {}).get('url')
+                            if raw_url:
+                                cloud_url = raw_url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
                 except Exception as e:
-                    print(f"[!] Catbox upload failed, falling back to local storage: {e}")
+                    print(f"[!] Tmpfiles upload failed: {e}")
+
+                # Service 2: Catbox.moe (Fallback)
+                if not cloud_url:
+                    try:
+                        import requests
+                        # Disable urllib3 warnings for verify=False
+                        import urllib3
+                        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+                        url = "https://catbox.moe/user/api.php"
+                        uploaded_file.seek(0)
+                        files = {
+                            'fileToUpload': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)
+                        }
+                        data = {
+                            'reqtype': 'fileupload'
+                        }
+                        response = requests.post(url, data=data, files=files, timeout=15, verify=False)
+                        if response.status_code == 200:
+                            file_url = response.text.strip()
+                            if file_url.startswith("http"):
+                                cloud_url = file_url
+                    except Exception as e:
+                        print(f"[!] Catbox upload failed: {e}")
 
                 if cloud_url:
                     # Save the direct cloud URL string to the FileField
