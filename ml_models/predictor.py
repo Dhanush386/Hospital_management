@@ -1,7 +1,4 @@
 import os
-import joblib
-import pandas as pd
-import numpy as np
 
 class WaitTimePredictor:
     def __init__(self):
@@ -9,9 +6,15 @@ class WaitTimePredictor:
         self.model = None
         self.le_dept = None
         self.features = None
-        self._load_model()
+        self._loaded = False
 
     def _load_model(self):
+        if self._loaded:
+            return
+        
+        # Lazy import joblib only when loading the model
+        import joblib
+        
         if os.path.exists(self.model_path):
             try:
                 data = joblib.load(self.model_path)
@@ -22,12 +25,19 @@ class WaitTimePredictor:
                 print(f"[!] Error loading model: {e}")
         else:
             print("[!] Model file not found. Please train the model first.")
+        
+        self._loaded = True
 
     def predict_wait_time(self, hour, day_of_week, queue_length, doctor_count, department):
+        self._load_model()
+        
         if not self.model or not self.le_dept:
             return None
         
         try:
+            # Lazy import pandas only when predicting
+            import pandas as pd
+            
             # Handle unknown departments gracefully
             if department in self.le_dept.classes_:
                 dept_encoded = self.le_dept.transform([department])[0]
@@ -49,5 +59,6 @@ class WaitTimePredictor:
             print(f"[!] Prediction error: {e}")
             return None
 
-# Singleton instance
+# Singleton instance (does not eager load the libraries or model now!)
 predictor = WaitTimePredictor()
+

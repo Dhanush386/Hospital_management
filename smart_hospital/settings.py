@@ -85,6 +85,11 @@ DATABASES = {
     )
 }
 
+# Support Supabase connection pooler in transaction mode
+if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
+
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
