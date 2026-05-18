@@ -2,11 +2,222 @@
 
 {% block title %}Prescription Detail - Smart Hospital{% endblock %}
 
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Kalam:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap');
+
+    .prescription-pad {
+        background: #fcfbf9; /* warm vintage paper */
+        background-image: linear-gradient(#e8e6e1 1px, transparent 1px);
+        background-size: 100% 2.2rem;
+        border: 1px solid #d4d0c8;
+        border-radius: 8px;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
+        padding: 2.5rem;
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        font-family: 'Outfit', sans-serif;
+        color: #2d3748;
+        line-height: 2.2rem;
+        text-align: left;
+    }
+
+    .prescription-pad::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle, transparent 20%, rgba(252, 251, 249, 0.4) 100%);
+        pointer-events: none;
+    }
+
+    .prescription-pad-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+    }
+
+    .rx-logo-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .rx-logo {
+        font-size: 4.5rem;
+        font-weight: 700;
+        color: #1e3a8a;
+        line-height: 1;
+    }
+
+    .patient-info-fields {
+        flex-grow: 1;
+        margin-left: 2rem;
+    }
+
+    .info-line {
+        display: flex;
+        align-items: flex-end;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    .info-label {
+        white-space: nowrap;
+        margin-right: 0.5rem;
+    }
+
+    .info-value {
+        flex-grow: 1;
+        border-bottom: 1.5px dotted #a0aec0;
+        padding-bottom: 2px;
+        font-family: 'Caveat', cursive;
+        font-size: 1.5rem;
+        color: #1e40af;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .prescription-pad-divider {
+        border-top: 2.5px solid #1e3a8a;
+        margin: 1.5rem 0;
+    }
+
+    .prescription-pad-body {
+        min-height: 280px;
+        margin-bottom: 2rem;
+    }
+
+    .body-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1rem;
+    }
+
+    .medicine-item {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+        position: relative;
+        line-height: 1.6;
+    }
+
+    .medicine-item::before {
+        content: "Rx";
+        position: absolute;
+        left: 0;
+        top: 2px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: #1d4ed8;
+    }
+
+    .med-name {
+        font-family: 'Caveat', cursive;
+        font-size: 1.6rem;
+        color: #1e3a8a;
+        font-weight: 700;
+        margin-bottom: 0.1rem;
+        line-height: 1.1;
+    }
+
+    .med-details {
+        font-size: 0.85rem;
+        color: #475569;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.2rem;
+    }
+
+    .med-badge {
+        background-color: #eff6ff;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-weight: 500;
+    }
+
+    .prescription-pad-footer {
+        border-top: 1.5px solid #1e3a8a;
+        padding-top: 1rem;
+    }
+
+    .footer-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 1rem;
+    }
+
+    .refill-numbers span {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        line-height: 16px;
+        text-align: center;
+        border: 1px solid #cbd5e1;
+        border-radius: 3px;
+        margin-left: 4px;
+        font-size: 0.75rem;
+    }
+
+    .prescription-notes {
+        background: #f8fafc;
+        border-left: 3px solid #94a3b8;
+        padding: 0.5rem 1rem;
+        font-style: italic;
+        color: #334155;
+        margin-bottom: 1.5rem;
+        font-family: 'Caveat', cursive;
+        font-size: 1.4rem;
+        line-height: 1.2;
+    }
+
+    .signature-section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .signature-line {
+        width: 180px;
+        border-bottom: 1px dotted #64748b;
+        margin-bottom: 0.25rem;
+    }
+
+    .signature-label {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 600;
+        margin-right: 1.5rem;
+    }
+
+    .doctor-name-handwritten {
+        font-family: 'Caveat', cursive;
+        font-size: 1.5rem;
+        color: #0f172a;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 2px;
+        padding-right: 1.5rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h1 class="h2"><i class="bi bi-capsule me-2"></i>Prescription Detail</h1>
-        <p class="text-muted mb-0">{{ prescription.patient.name }} • {{ prescription.patient.token_id }}</p>
+        <p class="text-muted mb-0">{{ prescription.patient.name }} • Token: {{ prescription.patient.token_id }}</p>
     </div>
     <a href="{% url 'pharmacy:dashboard' %}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
@@ -14,58 +225,98 @@
 </div>
 
 <div class="row g-4">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-body">
-                <h3 class="h5 mb-3">Medicines</h3>
-                {% if prescription.medicines_list %}
-                    <div class="table-responsive">
-                        <table class="table align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Medicine</th>
-                                    <th>Dosage</th>
-                                    <th>Duration</th>
-                                    <th>Instructions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for medicine in prescription.medicines_list %}
-                                <tr>
-                                    <td>{{ medicine.name }}</td>
-                                    <td>{{ medicine.dosage|default:"-" }}</td>
-                                    <td>{{ medicine.duration|default:"-" }}</td>
-                                    <td>{{ medicine.instructions|default:"-" }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+    <!-- Left Column: Authentic Doctor's Prescription Pad -->
+    <div class="col-lg-8 text-center">
+        <div class="prescription-pad">
+            <!-- Header Section -->
+            <div class="prescription-pad-header">
+                <div class="rx-logo-container">
+                    <span class="rx-logo">Rx</span>
+                </div>
+                
+                <div class="patient-info-fields">
+                    <div class="info-line">
+                        <span class="info-label">Date:</span>
+                        <span class="info-value">{{ prescription.created_at|date:"d/m/Y" }}</span>
                     </div>
-                {% else %}
-                    <p class="mb-0 text-muted">No medicine details recorded.</p>
+                    <div class="info-line">
+                        <span class="info-label">Patient Name:</span>
+                        <span class="info-value">{{ prescription.patient.name }}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">Age:</span>
+                        <span class="info-value" style="flex-grow: 0; width: 60px; margin-right: 1.5rem;">{{ prescription.patient.age|default:"--" }}</span>
+                        <span class="info-label">Weight:</span>
+                        <span class="info-value">-- kg</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">Address:</span>
+                        <span class="info-value">{{ prescription.patient.address|default:"--" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="prescription-pad-divider"></div>
+            
+            <!-- Body Section -->
+            <div class="prescription-pad-body">
+                <div class="body-title">Prescription:</div>
+                
+                {% for med in prescription.medicines_list %}
+                <div class="medicine-item">
+                    <div class="med-name">{{ med.name }}</div>
+                    <div class="med-details">
+                        <span class="med-badge">Dosage: {{ med.dosage|default:"As directed" }}</span>
+                        <span class="med-badge">Duration: {{ med.duration|default:"-" }}</span>
+                        {% if med.instructions %}
+                        <span class="med-badge">{{ med.instructions }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted italic">No medicines prescribed.</p>
+                {% endfor %}
+            </div>
+            
+            <!-- Footer Section -->
+            <div class="prescription-pad-footer">
+                <div class="footer-options">
+                    <div>Do Not Refill <input type="checkbox" style="margin-left: 3px;" disabled></div>
+                    <div class="refill-numbers">
+                        Refill <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                    </div>
+                </div>
+                
+                {% if prescription.notes %}
+                <div class="prescription-notes">
+                    <strong>Note:</strong> {{ prescription.notes }}
+                </div>
                 {% endif %}
+                
+                <div class="signature-section">
+                    <span class="doctor-name-handwritten">Dr. {{ prescription.doctor.get_full_name }}</span>
+                    <div class="signature-line"></div>
+                    <span class="signature-label">Signature</span>
+                </div>
             </div>
         </div>
-
-        {% if prescription.notes %}
-        <div class="card mt-4">
-            <div class="card-body">
-                <h3 class="h5 mb-3">Notes</h3>
-                <p class="mb-0">{{ prescription.notes }}</p>
-            </div>
-        </div>
-        {% endif %}
     </div>
 
+    <!-- Right Column: Sidebar Actions & Summary -->
     <div class="col-lg-4">
-        <div class="card">
+        <!-- Summary Sidebar -->
+        <div class="card mb-4">
             <div class="card-body">
                 <h3 class="h5 mb-3">Summary</h3>
                 <dl class="row mb-0">
                     <dt class="col-5">Doctor</dt>
                     <dd class="col-7">Dr. {{ prescription.doctor.get_full_name }}</dd>
                     <dt class="col-5">Status</dt>
-                    <dd class="col-7">{{ prescription.get_status_display }}</dd>
+                    <dd class="col-7">
+                        <span class="status-badge status-{{ prescription.status|lower }}">
+                            {{ prescription.get_status_display }}
+                        </span>
+                    </dd>
                     <dt class="col-5">Created</dt>
                     <dd class="col-7">{{ prescription.created_at|date:"M d, Y H:i" }}</dd>
                     <dt class="col-5">Dispensed</dt>
@@ -73,6 +324,47 @@
                 </dl>
             </div>
         </div>
+
+        <!-- Action Panel for Pharmacy -->
+        {% if prescription.status == 'PENDING' %}
+        <div class="card border-primary">
+            <div class="card-body">
+                <h5 class="card-title text-primary"><i class="bi bi-gear-fill me-2"></i>Pharmacy Action</h5>
+                <p class="card-text text-muted small">Verify the prescribed items and notes, then prepare the medications. Mark it ready once it is packed and ready for pick-up.</p>
+                <form method="post" action="{% url 'pharmacy:prescription_detail' prescription.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="mark_ready">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-check-circle me-2"></i>Mark Ready for Pick-up
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% elif prescription.status == 'READY' %}
+        <div class="card border-success">
+            <div class="card-body">
+                <h5 class="card-title text-success"><i class="bi bi-capsule-solid me-2"></i>Ready to Dispense</h5>
+                <p class="card-text text-muted small">Medications are prepared and packed. Click the dispense button once you hand over the medicines to the patient.</p>
+                <form method="post" action="{% url 'pharmacy:prescription_detail' prescription.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="dispense">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-hand-thumbs-up me-2"></i>Dispense Medicines
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% elif prescription.status == 'DISPENSED' %}
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title text-muted"><i class="bi bi-check-all me-2"></i>Order Fulfilled</h5>
+                <p class="card-text text-muted small">This prescription was successfully dispensed by <strong>{{ prescription.dispensed_by.get_full_name }}</strong> on {{ prescription.dispensed_at|date:"M d, Y H:i" }}.</p>
+                <button class="btn btn-secondary w-100" disabled>
+                    <i class="bi bi-check-lg me-2"></i>Dispensed Successfully
+                </button>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
