@@ -80,8 +80,35 @@ class LabOrderDetailView(LoginRequiredMixin, LabRequiredMixin, View):
             order.status = 'COMPLETED'
             order.result_notes = request.POST.get('result_notes', '')
 
-            if request.FILES.get('result_file'):
-                order.result_file = request.FILES['result_file']
+            uploaded_file = request.FILES.get('result_file')
+            if uploaded_file:
+                # Try to upload to cloud storage (Catbox) to support serverless environment
+                cloud_url = None
+                try:
+                    import requests
+                    url = "https://catbox.moe/user/api.php"
+                    uploaded_file.seek(0)
+                    files = {
+                        'fileToUpload': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)
+                    }
+                    data = {
+                        'reqtype': 'fileupload'
+                    }
+                    response = requests.post(url, data=data, files=files, timeout=15)
+                    if response.status_code == 200:
+                        file_url = response.text.strip()
+                        if file_url.startswith("http"):
+                            cloud_url = file_url
+                except Exception as e:
+                    print(f"[!] Catbox upload failed, falling back to local storage: {e}")
+
+                if cloud_url:
+                    # Save the direct cloud URL string to the FileField
+                    order.result_file = cloud_url
+                else:
+                    # Fallback to local /tmp/media storage
+                    uploaded_file.seek(0)
+                    order.result_file = uploaded_file
 
             order.completed_at = timezone.now()
             order.completed_by = request.user
