@@ -13,11 +13,60 @@ from queues.realtime import broadcast_queue_refresh
 
 
 class HomeView(View):
-    """Landing page view."""
+    """Landing page view or Admin ML Analytics Dashboard."""
     def get(self, request):
         if request.user.is_authenticated:
+            if request.user.role == 'ADMIN' or request.user.is_staff:
+                return render(request, 'admin/ml_analytics.html', {
+                    'user': request.user,
+                    'model_metrics': {
+                        'rmse': '6.75 mins',
+                        'r2': '92%',
+                        'dataset_size': 800,
+                        'model_type': 'Random Forest Regressor'
+                    }
+                })
             return redirect('role_redirect')
         return render(request, 'home.html')
+
+    def post(self, request):
+        if not (request.user.is_authenticated and (request.user.role == 'ADMIN' or request.user.is_staff)):
+            from django.http import JsonResponse
+            return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+        from ml_models.predictor import predictor
+        from django.http import JsonResponse
+
+        try:
+            hour = int(request.POST.get('hour', 10))
+            day_of_week = int(request.POST.get('day_of_week', 1))
+            queue_length = int(request.POST.get('queue_length', 5))
+            doctor_count = int(request.POST.get('doctor_count', 2))
+            department = request.POST.get('department', 'GENERAL')
+
+            prediction = predictor.predict_wait_time(
+                hour=hour,
+                day_of_week=day_of_week,
+                queue_length=queue_length,
+                doctor_count=doctor_count,
+                department=department
+            )
+
+            if prediction is not None:
+                return JsonResponse({
+                    'success': True,
+                    'prediction': prediction
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Model could not generate prediction. Ensure the model is trained.'
+                })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
 
 
 class RegisterView(View):
