@@ -180,16 +180,25 @@ class CreatePrescriptionView(LoginRequiredMixin, DoctorRequiredMixin, View):
         durations = request.POST.getlist('duration[]')
         instructions = request.POST.getlist('instructions[]')
 
+        num_meds = len(medicines)
+        # Pad all lists to match the number of medicines entered
+        while len(dosages) < num_meds:
+            dosages.append('')
+        while len(durations) < num_meds:
+            durations.append('')
+        while len(instructions) < num_meds:
+            instructions.append('')
+
         medicines_data = {
             'medicines': [
                 {
-                    'name': med,
-                    'dosage': dos,
-                    'duration': dur,
-                    'instructions': inst
+                    'name': medicines[i],
+                    'dosage': dosages[i],
+                    'duration': durations[i],
+                    'instructions': instructions[i]
                 }
-                for med, dos, dur, inst in zip(medicines, dosages, durations, instructions)
-                if med
+                for i in range(num_meds)
+                if medicines[i]
             ]
         }
 

@@ -43,16 +43,19 @@
                         {% csrf_token %}
                         <div id="medicine-rows">
                             <div class="row medicine-row mb-3">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <input type="text" name="medicine[]" class="form-control" placeholder="Medicine name" required>
                                 </div>
                                 <div class="col-md-3">
                                     <input type="text" name="dosage[]" class="form-control" placeholder="Dosage (e.g., 1 tablet)" required>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <input type="text" name="duration[]" class="form-control" placeholder="Duration (e.g., 7 days)" required>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3">
+                                    <input type="text" name="instructions[]" class="form-control" placeholder="Instructions (optional)">
+                                </div>
+                                <div class="col-md-1">
                                     <button type="button" class="btn btn-outline-danger btn-sm remove-row" style="display: none;">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -64,11 +67,6 @@
                             <button type="button" class="btn btn-outline-primary btn-sm" id="add-medicine">
                                 <i class="bi bi-plus me-1"></i>Add Medicine
                             </button>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Instructions</label>
-                            <textarea name="instructions[]" class="form-control" rows="2" placeholder="General instructions"></textarea>
                         </div>
 
                         <div class="d-grid">
