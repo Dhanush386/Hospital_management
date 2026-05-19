@@ -82,36 +82,21 @@ class LabOrderDetailView(LoginRequiredMixin, LabRequiredMixin, View):
 
             uploaded_file = request.FILES.get('result_file')
             if uploaded_file:
-                # Try to upload to cloud storage to support serverless environment
-                cloud_url = None
+                # In local development, save files permanently to local media storage
+                # In serverless environments (e.g. Vercel), upload to Catbox (permanent) or Tmpfiles (temporary)
+                import os
+                is_serverless = os.getenv('VERCEL') == '1'
 
-                # Service 1: Tmpfiles.org (Highly reliable, CI/CD friendly)
-                try:
-                    import requests
-                    # Disable urllib3 warnings for verify=False
-                    import urllib3
-                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                    
-                    url = "https://tmpfiles.org/api/v1/upload"
+                if not is_serverless:
+                    # Save locally
                     uploaded_file.seek(0)
-                    files = {
-                        'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)
-                    }
-                    response = requests.post(url, files=files, timeout=15, verify=False)
-                    if response.status_code == 200:
-                        data = response.json()
-                        if data.get('status') == 'success':
-                            raw_url = data.get('data', {}).get('url')
-                            if raw_url:
-                                cloud_url = raw_url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
-                except Exception as e:
-                    print(f"[!] Tmpfiles upload failed: {e}")
+                    order.result_file = uploaded_file
+                else:
+                    cloud_url = None
 
-                # Service 2: Catbox.moe (Fallback)
-                if not cloud_url:
+                    # Service 1: Catbox.moe (Permanent cloud storage)
                     try:
                         import requests
-                        # Disable urllib3 warnings for verify=False
                         import urllib3
                         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -131,13 +116,34 @@ class LabOrderDetailView(LoginRequiredMixin, LabRequiredMixin, View):
                     except Exception as e:
                         print(f"[!] Catbox upload failed: {e}")
 
-                if cloud_url:
-                    # Save the direct cloud URL string to the FileField
-                    order.result_file = cloud_url
-                else:
-                    # Fallback to local /tmp/media storage
-                    uploaded_file.seek(0)
-                    order.result_file = uploaded_file
+                    # Service 2: Tmpfiles.org (Fallback temporary cloud storage)
+                    if not cloud_url:
+                        try:
+                            import requests
+                            import urllib3
+                            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                            
+                            url = "https://tmpfiles.org/api/v1/upload"
+                            uploaded_file.seek(0)
+                            files = {
+                                'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)
+                            }
+                            response = requests.post(url, files=files, timeout=15, verify=False)
+                            if response.status_code == 200:
+                                data = response.json()
+                                if data.get('status') == 'success':
+                                    raw_url = data.get('data', {}).get('url')
+                                    if raw_url:
+                                        cloud_url = raw_url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
+                        except Exception as e:
+                            print(f"[!] Tmpfiles upload failed: {e}")
+
+                    if cloud_url:
+                        order.result_file = cloud_url
+                    else:
+                        # Fallback to local storage if all cloud uploads fail
+                        uploaded_file.seek(0)
+                        order.result_file = uploaded_file
 
             order.completed_at = timezone.now()
             order.completed_by = request.user
