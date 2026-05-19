@@ -263,91 +263,6 @@
                             </button>
                         </td>
                     </tr>
-
-                    <!-- Prescription Pad Modal -->
-                    <div class="modal fade" id="prescriptionModal{{ prescription.id }}" tabindex="-1" aria-labelledby="prescriptionModalLabel{{ prescription.id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content modal-content-prescription">
-                                <div class="modal-body p-0">
-                                    <div class="prescription-pad">
-                                        <button type="button" class="btn-close float-end position-relative" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
-                                        
-                                        <!-- Header Section -->
-                                        <div class="prescription-pad-header">
-                                            <div class="rx-logo-container">
-                                                <span class="rx-logo">Rx</span>
-                                            </div>
-                                            
-                                            <div class="patient-info-fields">
-                                                <div class="info-line">
-                                                    <span class="info-label">Date:</span>
-                                                    <span class="info-value">{{ prescription.created_at|date:"d/m/Y" }}</span>
-                                                </div>
-                                                <div class="info-line">
-                                                    <span class="info-label">Patient Name:</span>
-                                                    <span class="info-value">{{ prescription.patient.name }}</span>
-                                                </div>
-                                                <div class="info-line">
-                                                    <span class="info-label">Age:</span>
-                                                    <span class="info-value" style="flex-grow: 0; width: 60px; margin-right: 1.5rem;">{{ prescription.patient.age|default:"--" }}</span>
-                                                    <span class="info-label">Weight:</span>
-                                                    <span class="info-value">{% if prescription.patient.weight %}{{ prescription.patient.weight }} kg{% else %}-- kg{% endif %}</span>
-                                                </div>
-                                                <div class="info-line">
-                                                    <span class="info-label">Address:</span>
-                                                    <span class="info-value">{{ prescription.patient.address|default:"--" }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="prescription-pad-divider"></div>
-                                        
-                                        <!-- Body Section -->
-                                        <div class="prescription-pad-body">
-                                            <div class="body-title">Prescription:</div>
-                                            
-                                            {% for med in prescription.medicines_list %}
-                                            <div class="medicine-item">
-                                                <div class="med-name">{{ med.name }}</div>
-                                                <div class="med-details">
-                                                    <span class="med-badge">Dosage: {{ med.dosage|default:"As directed" }}</span>
-                                                    <span class="med-badge">Duration: {{ med.duration|default:"-" }}</span>
-                                                    {% if med.instructions %}
-                                                    <span class="med-badge">{{ med.instructions }}</span>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                            {% empty %}
-                                            <p class="text-muted italic">No medicines prescribed.</p>
-                                            {% endfor %}
-                                        </div>
-                                        
-                                        <!-- Footer Section -->
-                                        <div class="prescription-pad-footer">
-                                            <div class="footer-options">
-                                                <div>Do Not Refill <input type="checkbox" style="margin-left: 3px;" disabled></div>
-                                                <div class="refill-numbers">
-                                                    Refill <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-                                                </div>
-                                            </div>
-                                            
-                                            {% if prescription.notes %}
-                                            <div class="prescription-notes">
-                                                <strong>Note:</strong> {{ prescription.notes }}
-                                            </div>
-                                            {% endif %}
-                                            
-                                            <div class="signature-section">
-                                                <span class="doctor-name-handwritten">Dr. {{ prescription.doctor.get_full_name }}</span>
-                                                <div class="signature-line"></div>
-                                                <span class="signature-label">Signature</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     {% empty %}
                     <tr>
                         <td colspan="6" class="empty-state">
@@ -361,4 +276,91 @@
         </div>
     </div>
 </div>
+
+<!-- Prescription Pad Modals -->
+{% for prescription in prescriptions %}
+<div class="modal fade" id="prescriptionModal{{ prescription.id }}" tabindex="-1" aria-labelledby="prescriptionModalLabel{{ prescription.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-prescription">
+            <div class="modal-body p-0">
+                <div class="prescription-pad">
+                    <button type="button" class="btn-close float-end position-relative" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
+                    
+                    <!-- Header Section -->
+                    <div class="prescription-pad-header">
+                        <div class="rx-logo-container">
+                            <span class="rx-logo">Rx</span>
+                        </div>
+                        
+                        <div class="patient-info-fields">
+                            <div class="info-line">
+                                <span class="info-label">Date:</span>
+                                <span class="info-value">{{ prescription.created_at|date:"d/m/Y" }}</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Patient Name:</span>
+                                <span class="info-value">{{ prescription.patient.name }}</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Age:</span>
+                                <span class="info-value" style="flex-grow: 0; width: 60px; margin-right: 1.5rem;">{{ prescription.patient.age|default:"--" }}</span>
+                                <span class="info-label">Weight:</span>
+                                <span class="info-value">{% if prescription.patient.weight %}{{ prescription.patient.weight }} kg{% else %}-- kg{% endif %}</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Address:</span>
+                                <span class="info-value">{{ prescription.patient.address|default:"--" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="prescription-pad-divider"></div>
+                    
+                    <!-- Body Section -->
+                    <div class="prescription-pad-body">
+                        <div class="body-title">Prescription:</div>
+                        
+                        {% for med in prescription.medicines_list %}
+                        <div class="medicine-item">
+                            <div class="med-name">{{ med.name }}</div>
+                            <div class="med-details">
+                                <span class="med-badge">Dosage: {{ med.dosage|default:"As directed" }}</span>
+                                <span class="med-badge">Duration: {{ med.duration|default:"-" }}</span>
+                                {% if med.instructions %}
+                                <span class="med-badge">{{ med.instructions }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted italic">No medicines prescribed.</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Footer Section -->
+                    <div class="prescription-pad-footer">
+                        <div class="footer-options">
+                            <div>Do Not Refill <input type="checkbox" style="margin-left: 3px;" disabled></div>
+                            <div class="refill-numbers">
+                                Refill <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                            </div>
+                        </div>
+                        
+                        {% if prescription.notes %}
+                        <div class="prescription-notes">
+                            <strong>Note:</strong> {{ prescription.notes }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="signature-section">
+                            <span class="doctor-name-handwritten">Dr. {{ prescription.doctor.get_full_name }}</span>
+                            <div class="signature-line"></div>
+                            <span class="signature-label">Signature</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}
