@@ -28,9 +28,9 @@
                     <p><strong>Results:</strong></p>
                     <p>{{ order.result_notes|linebreaks }}</p>
 
-                    {% if order.result_file %}
-                        <a href="{{ order.result_file.url }}" class="btn btn-outline-primary" target="_blank">
-                            <i class="bi bi-download me-2"></i>Download Result
+                    {% if order.result_file_base64 or order.result_file %}
+                        <a href="{% url 'lab:view_file' order.id %}" class="btn btn-outline-primary" target="_blank">
+                            <i class="bi bi-eye me-2"></i>View Result
                         </a>
                     {% endif %}
 

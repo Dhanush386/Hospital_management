@@ -68,8 +68,8 @@
             <div class="card-body">
                 <h3 class="h5 mb-3">Result</h3>
                 <p>{{ order.result_notes|default:"No result notes recorded." }}</p>
-                {% if order.result_file %}
-                    <a href="{{ order.result_file.url }}" target="_blank" class="btn btn-outline-primary">Open Result File</a>
+                {% if order.result_file_base64 or order.result_file %}
+                    <a href="{% url 'lab:view_file' order.id %}" target="_blank" class="btn btn-outline-primary">Open Result File</a>
                 {% endif %}
             </div>
         </div>

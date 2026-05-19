@@ -192,6 +192,81 @@
             </div>
         </div>
     </div>
+
+    <!-- Consultation Summaries (AI SOAP Notes) Section -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-robot me-2 text-info"></i>Doctor Consultation Summaries (AI SOAP Notes)</h5>
+                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2.5 py-1 fw-semibold">Clinical Records</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="accordion accordion-flush" id="consultationAccordion">
+                        {% for note in consultation_notes %}
+                        <div class="accordion-item border-bottom">
+                            <h2 class="accordion-header" id="headingNote{{ note.id }}">
+                                <button class="accordion-button collapsed py-3.5 px-4 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNote{{ note.id }}" aria-expanded="false" aria-controls="collapseNote{{ note.id }}">
+                                    <div class="w-100 d-flex justify-content-between align-items-center pe-4">
+                                        <div>
+                                            <span class="fw-semibold text-primary" style="font-size: 1.05rem;">Dr. {{ note.doctor.get_full_name }}</span>
+                                            <span class="text-muted ms-2 small">({{ note.doctor.doctor_profile.department|default:"General Medicine" }})</span>
+                                        </div>
+                                        <span class="badge bg-light text-secondary border px-2 py-1">{{ note.created_at|date:"M d, Y" }}</span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapseNote{{ note.id }}" class="accordion-collapse collapse" aria-labelledby="headingNote{{ note.id }}" data-bs-parent="#consultationAccordion">
+                                <div class="accordion-body bg-light-subtle p-4">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="p-3.5 bg-white border border-light-subtle rounded-3 shadow-xs h-100">
+                                                <h6 class="text-info fw-bold mb-2.5 d-flex align-items-center">
+                                                    <i class="bi bi-person me-2 fs-5"></i>Subjective (Your Symptoms)
+                                                </h6>
+                                                <p class="mb-0 text-secondary" style="white-space: pre-line; line-height: 1.5; font-size: 0.95rem;">{{ note.structured_note.subjective|default:"No subjective details recorded." }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-3.5 bg-white border border-light-subtle rounded-3 shadow-xs h-100">
+                                                <h6 class="text-info fw-bold mb-2.5 d-flex align-items-center">
+                                                    <i class="bi bi-activity me-2 fs-5"></i>Objective (Clinical Findings)
+                                                </h6>
+                                                <p class="mb-0 text-secondary" style="white-space: pre-line; line-height: 1.5; font-size: 0.95rem;">{{ note.structured_note.objective|default:"No objective findings recorded." }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-3.5 bg-white border border-light-subtle rounded-3 shadow-xs h-100">
+                                                <h6 class="text-info fw-bold mb-2.5 d-flex align-items-center">
+                                                    <i class="bi bi-file-medical me-2 fs-5"></i>Assessment (Diagnosis)
+                                                </h6>
+                                                <p class="mb-0 text-secondary" style="white-space: pre-line; line-height: 1.5; font-size: 0.95rem;">{{ note.structured_note.assessment|default:"No assessment/diagnosis recorded." }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-3.5 bg-white border border-light-subtle rounded-3 shadow-xs h-100">
+                                                <h6 class="text-info fw-bold mb-2.5 d-flex align-items-center">
+                                                    <i class="bi bi-journal-medical me-2 fs-5"></i>Plan (Treatment & Follow-up)
+                                                </h6>
+                                                <p class="mb-0 text-secondary" style="white-space: pre-line; line-height: 1.5; font-size: 0.95rem;">{{ note.structured_note.plan|default:"No clinical plan/treatment recorded." }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state text-center py-5 text-muted">
+                            <i class="bi bi-robot display-5 text-info mb-3"></i>
+                            <h6 class="fw-semibold">No Consultation Summaries Yet</h6>
+                            <p class="text-muted small mb-0">Summarized clinical records from your visits will appear here.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% else %}
     <div class="card">
         <div class="card-body text-center py-5">

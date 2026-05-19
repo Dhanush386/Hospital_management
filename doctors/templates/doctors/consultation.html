@@ -231,8 +231,8 @@
                             <span>{{ order.test_name }}</span>
                             <span class="status-badge status-{{ order.status|lower }}">{{ order.get_status_display }}</span>
                         </div>
-                        {% if order.result_file %}
-                        <a href="{{ order.result_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                        {% if order.result_file_base64 or order.result_file %}
+                        <a href="{% url 'lab:view_file' order.id %}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
                             View Result
                         </a>
                         {% endif %}

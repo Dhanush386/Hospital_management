@@ -31,6 +31,7 @@ class RoleRedirectMiddleware:
                 or path.startswith('/media/')
                 or path.startswith('/queue/display/')
                 or path.startswith('/queue/api/status/')
+                or '/view-file/' in path
             ):
                 return self.get_response(request)
 

@@ -172,8 +172,8 @@
                         <td>{{ order.completed_by.get_full_name }}</td>
                         <td>{{ order.completed_at|date:"M d, H:i" }}</td>
                         <td>
-                            {% if order.result_file %}
-                            <a href="{{ order.result_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            {% if order.result_file_base64 or order.result_file %}
+                            <a href="{% url 'lab:view_file' order.id %}" target="_blank" class="btn btn-sm btn-outline-primary">
                                 View
                             </a>
                             {% else %}

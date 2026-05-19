@@ -82,8 +82,18 @@ class LabOrderDetailView(LoginRequiredMixin, LabRequiredMixin, View):
 
             uploaded_file = request.FILES.get('result_file')
             if uploaded_file:
-                # In local development, save files permanently to local media storage
-                # In serverless environments (e.g. Vercel), upload to Catbox (permanent) or Tmpfiles (temporary)
+                # 1. Save file directly inside the database as Base64 encoded binary data
+                import base64
+                try:
+                    uploaded_file.seek(0)
+                    file_bytes = uploaded_file.read()
+                    order.result_file_base64 = base64.b64encode(file_bytes).decode('utf-8')
+                    order.result_file_name = uploaded_file.name
+                    order.result_file_type = uploaded_file.content_type
+                except Exception as e:
+                    print(f"[!] Error encoding file to base64: {e}")
+
+                # 2. Traditional filesystem/cloud backup storage
                 import os
                 is_serverless = os.getenv('VERCEL') == '1'
 
@@ -177,3 +187,46 @@ class LabOrderListView(LoginRequiredMixin, LabRequiredMixin, View):
             'current_status': status,
             'lab_department': get_lab_department(request.user),
         })
+
+
+class ViewLabReportFileView(LoginRequiredMixin, View):
+    """
+    Decodes the Base64 file data stored directly in PostgreSQL/SQLite and streams
+    it dynamically to the user's browser, providing instant, permanent viewing.
+    """
+    def get(self, request, order_id):
+        from django.http import Http404, HttpResponse
+        from django.shortcuts import get_object_or_404, redirect
+        import base64
+
+        order = get_object_or_404(LabOrder, id=order_id)
+        
+        # Check permissions: only the assigned doctor, patient themselves, or lab technicians can view
+        user = request.user
+        is_authorized = (
+            user.role == 'LAB' or
+            (user.role == 'DOCTOR' and order.doctor == user) or
+            (user.role == 'PATIENT' and hasattr(user, 'patient_profile') and order.patient == user.patient_profile) or
+            user.is_superuser
+        )
+        if not is_authorized:
+            return HttpResponse("Unauthorized to view this file.", status=403)
+
+        if not order.result_file_base64:
+            # Fallback to result_file's url if base64 is missing (for legacy records)
+            if order.result_file:
+                return redirect(order.result_file.url)
+            raise Http404("No report file associated with this order.")
+
+        try:
+            file_data = base64.b64decode(order.result_file_base64)
+            response = HttpResponse(file_data, content_type=order.result_file_type or 'application/octet-stream')
+
+            # Render inline for browser-viewable types (PDF, Images)
+            inline_types = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif']
+            disposition = 'inline' if order.result_file_type in inline_types else 'attachment'
+
+            response['Content-Disposition'] = f'{disposition}; filename="{order.result_file_name or "report"}"'
+            return response
+        except Exception as e:
+            raise Http404(f"Error decoding lab report file: {e}")
